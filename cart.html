@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Your Cart - Pet Food</title>
+<link rel="stylesheet" href="style.css">
+<style>
+    /* Add a specific style for the green discount text */
+    .discount-text {
+        color: #28a745;
+        font-weight: bold;
+    }
+</style>
+</head>
+<body>
+<header><h1>🐾 Your Cart</h1>
+<nav>
+<a href="index.html">Home</a>
+<a href="products.html">Products</a>
+<a href="cart.html">🛒 Cart</a>
+</nav></header>
+
+<div class="cart-container" id="cart-container"></div>
+
+<script>
+    const cartContainer = document.getElementById('cart-container');
+    let cart = JSON.parse(localStorage.getItem('shoppingCart')) || [];
+
+    function saveCart() { localStorage.setItem('shoppingCart', JSON.stringify(cart)); renderCart(); }
+    function increaseQty(id) { const item = cart.find(i => i.id === id); if(item){item.quantity++; saveCart();}}
+    function decreaseQty(id) { const idx = cart.findIndex(i => i.id === id); if(idx>-1){cart[idx].quantity--; if(cart[idx].quantity===0)cart.splice(idx,1); saveCart();}}
+    function removeItem(id) { const idx = cart.findIndex(i => i.id === id); if(idx>-1){cart.splice(idx,1); saveCart();}}
+    function clearCart() { cart = []; saveCart(); }
+    function goToCheckout() { window.location.href = 'checkout.html'; }
+
+    function renderCart() {
+        if (cart.length === 0) {
+            cartContainer.innerHTML = `<div class="empty-state-container"><div class="empty-state-icon">🛒</div><h2>Your cart is empty</h2><a href="products.html" class="continue-shop-btn">Continue Shopping</a></div>`;
+        } else {
+            let subtotal = 0;
+            cartContainer.innerHTML = '<h2>Review Your Order</h2>';
+            cart.forEach(item => {
+                subtotal += item.price * item.quantity;
+                cartContainer.innerHTML += `
+                    <div class="cart-item">
+                        <img src="${item.image}">
+                        <div class="item-details">
+                            <div class="item-title">${item.name}</div>
+                            <div>₹${item.price}</div>
+                            <div class="qty-controls">
+                                <button class="qty-btn" onclick="decreaseQty(${item.id})">-</button>
+                                <span class="qty-display">${item.quantity}</span>
+                                <button class="qty-btn" onclick="increaseQty(${item.id})">+</button>
+                                <button class="remove-btn" onclick="removeItem(${item.id})"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                            </div>
+                        </div>
+                        <div>₹${item.price*item.quantity}</div>
+                    </div>`;
+            });
+
+            // --- NEW DISCOUNT LOGIC ---
+            const tax = subtotal * 0.05; // 5% tax
+            const shipping = 50; // Flat shipping rate now (since we have a discount instead)
+            
+            let discountAmount = 0;
+            let discountHTML = '';
+            
+            // Apply 10% discount if subtotal is over ₹1000
+            if (subtotal > 1000) {
+                discountAmount = subtotal * 0.10;
+                // Create the HTML row to show the discount
+                discountHTML = `
+                    <div class="summary-row">
+                        <span class="discount-text">Special Offer (10% Off):</span>
+                        <span class="discount-text">-₹${discountAmount.toFixed(2)}</span>
+                    </div>`;
+            }
+
+            // Calculate final total (subtracting the discount)
+            const total = subtotal + tax + shipping - discountAmount;
+
+            cartContainer.innerHTML += `
+                <div class="order-summary-box">
+                    <div class="summary-row"><span>Subtotal:</span><span>₹${subtotal}</span></div>
+                    <div class="summary-row"><span>Tax (5%):</span><span>₹${tax.toFixed(2)}</span></div>
+                    <div class="summary-row"><span>Shipping:</span><span>₹${shipping}</span></div>
+                    ${discountHTML}
+                    <div class="summary-row total"><span>Total:</span><span>₹${Math.round(total)}</span></div>
+                </div>
+                <div class="cart-actions">
+                    <button onclick="clearCart()" style="background:#d9534f;padding:10px 20px;border-radius:25px;">Clear Cart</button>
+                    <button onclick="goToCheckout()" class="checkout-btn" style="border-radius:25px;">Proceed to Checkout</button>
+                </div>`;
+        }
+    }
+    renderCart();
+</script>
+</body>
+</html>
